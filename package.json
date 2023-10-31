@@ -1,13 +1,10 @@
 {
-  "name": "react-native-camera-kit",
+  "name": "@jtreact/react-native-camera-kit",
   "repository": {
     "type": "git",
     "url": "https://github.com/teslamotors/react-native-camera-kit.git"
   },
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/"
-  },
-  "version": "14.0.0-beta13",
+  "version": "14.0.2",
   "description": "A high performance, fully featured, rock solid camera library for React Native applications",
   "nativePackage": true,
   "scripts": {
@@ -19,8 +16,7 @@
     "release:beta": "yarn clean && yarn build && yarn publish --tag beta --verbose",
     "release:local": "yarn clean && yarn build && tmp=$(mktemp) && yarn pack --filename $tmp.tar.gz && open -R $tmp.tar.gz",
     "start": "watchman watch-del-all && node node_modules/react-native/local-cli/cli.js start",
-    "bootstrap": "cd example/ && bundle install && yarn && cd ios/ && bundle exec pod install",
-    "bootstrap-linux": "cd example/ && yarn"
+    "bootstrap": "cd example/ && yarn && cd ./ios && pod install"
   },
   "main": "dist/index.js",
   "module": "dist/index.js",

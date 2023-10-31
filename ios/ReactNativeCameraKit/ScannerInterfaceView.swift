@@ -18,8 +18,8 @@ class ScannerInterfaceView: UIView {
     // MARK: - Constants
 
     private let frameOffset: CGFloat = 30
-    private lazy let frameHeight: CGFloat = {
-        return UIScreen.main.bounds.width - 2 * self.frameOffset
+    private let frameHeight: CGFloat = {
+        return UIScreen.main.bounds.width - 2 * 30
     }()
     private let overlayColor: UIColor = .black.withAlphaComponent(0.4)
 
