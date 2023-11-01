@@ -92,7 +92,7 @@ class RealCamera: NSObject, CameraProtocol, AVCaptureMetadataOutputObjectsDelega
     func setup(cameraType: CameraType, supportedBarcodeType: [AVMetadataObject.ObjectType]) {
         DispatchQueue.main.async {
             self.cameraPreview.session = self.session
-            self.cameraPreview.previewLayer.videoGravity = .resizeAspect
+            self.cameraPreview.previewLayer.videoGravity = .resizeAspectFill
         }
         
         self.initializeMotionManager()
