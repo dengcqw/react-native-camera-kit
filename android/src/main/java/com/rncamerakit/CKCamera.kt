@@ -85,6 +85,7 @@ class CKCamera(context: ThemedReactContext) : FrameLayout(context), LifecycleObs
     private var cameraProvider: ProcessCameraProvider? = null
     private var outputPath: String? = null
     private var shutterAnimationDuration: Int = 50
+    private var shutterPhotoSound: Boolean = true
     private var effectLayer = View(context)
 
     // Camera Props
@@ -185,14 +186,14 @@ class CKCamera(context: ThemedReactContext) : FrameLayout(context), LifecycleObs
             orientationListener!!.enable()
 
             val scaleDetector =  ScaleGestureDetector(context, object: ScaleGestureDetector.SimpleOnScaleGestureListener() {
-                override fun onScaleBegin(detector: ScaleGestureDetector?): Boolean {
+                override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
                     val cameraZoom = camera?.cameraInfo?.zoomState?.value?.zoomRatio ?: return false
                     detector ?: return false
                     zoomStartedAt = cameraZoom
                     pinchGestureStartedAt = detector.currentSpan
                     return true
                 }
-                override fun onScale(detector: ScaleGestureDetector?): Boolean {
+                override fun onScale(detector: ScaleGestureDetector): Boolean {
                     if (zoomMode == "off") return true
                     if (detector == null) return true
                     val videoDevice = camera ?: return true
@@ -285,19 +286,20 @@ class CKCamera(context: ThemedReactContext) : FrameLayout(context), LifecycleObs
 
         // ImageCapture
         imageCapture = ImageCapture.Builder()
-                .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-                // We request aspect ratio but no resolution to match preview config, but letting
-                // CameraX optimize for whatever specific resolution best fits our use cases
-                .setTargetAspectRatio(screenAspectRatio)
-                // Set initial target rotation, we will have to call this again if rotation changes
-                // during the lifecycle of this use case
-                .setTargetRotation(rotation)
-                .build()
+            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+            // We request aspect ratio but no resolution to match preview config, but letting
+            // CameraX optimize for whatever specific resolution best fits our use cases
+            .setTargetAspectRatio(screenAspectRatio)
+            // Set initial target rotation, we will have to call this again if rotation changes
+            // during the lifecycle of this use case
+            .setTargetRotation(rotation)
+            .build()
 
         // ImageAnalysis
         imageAnalyzer = ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .setTargetAspectRatio(screenAspectRatio)
+            .build()
 
         val useCases = mutableListOf(preview, imageCapture)
 
@@ -326,6 +328,14 @@ class CKCamera(context: ThemedReactContext) : FrameLayout(context), LifecycleObs
             preview?.setSurfaceProvider(viewFinder.surfaceProvider)
         } catch (exc: Exception) {
             Log.e(TAG, "Use case binding failed", exc)
+
+            val event: WritableMap = Arguments.createMap()
+            event.putString("errorMessage", exc.message)
+            currentContext.getJSModule(RCTEventEmitter::class.java).receiveEvent(
+                    id,
+                    "onError",
+                    event
+            )
         }
     }
 
@@ -366,6 +376,10 @@ class CKCamera(context: ThemedReactContext) : FrameLayout(context), LifecycleObs
         shutterAnimationDuration = duration
     }
 
+    fun setShutterPhotoSound(enabled: Boolean) {
+        shutterPhotoSound = enabled;
+    }
+
     fun capture(options: Map<String, Any>, promise: Promise) {
         // Create the output file option to store the captured image in MediaStore
         val outputPath: String = when {
@@ -384,9 +398,11 @@ class CKCamera(context: ThemedReactContext) : FrameLayout(context), LifecycleObs
 
         flashViewFinder()
 
-        val audio = getActivity().getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        if (audio.ringerMode == AudioManager.RINGER_MODE_NORMAL) {
-            MediaActionSound().play(MediaActionSound.SHUTTER_CLICK)
+        if (shutterPhotoSound) {
+            val audio = getActivity().getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            if (audio.ringerMode == AudioManager.RINGER_MODE_NORMAL) {
+                MediaActionSound().play(MediaActionSound.SHUTTER_CLICK)
+            }
         }
 
         // Setup image capture listener which is triggered after photo has been taken

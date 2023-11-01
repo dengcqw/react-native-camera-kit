@@ -82,6 +82,8 @@ export interface CameraProps {
    * ```
    */
   onZoom?: (event: OnZoom) => void;
+  /** **Android only**. Triggered when camera fails to initialize */
+  onError?: (event: { nativeEvent: { errorMessage: number } }) => void;
   // Barcode only
   scanBarcode?: boolean;
   showFrame?: boolean;
@@ -95,6 +97,8 @@ export interface CameraProps {
   resetFocusWhenMotionDetected?: boolean;
   /** **iOS Only**. Throttle how often the barcode scanner triggers a new scan */
   scanThrottleDelay?: number;
+  /** **Android only**. Play a shutter capture sound when capturing a photo */
+  shutterPhotoSound?: boolean;
 }
 
 declare const Camera: React.FC<CameraProps>;

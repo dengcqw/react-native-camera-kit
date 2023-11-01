@@ -46,6 +46,69 @@ Android:
 
 ## Permissions
 
+You must use a separate library for prompting the user for permissions before rendering the `<Camera .../>` component.  
+We recommend zoontek's library, react-native-permissions:
+https://github.com/zoontek/react-native-permissions#ios-flow
+
+**If you fail to prompt for permission, the camera will appear blank / black.**
+
+### Why no permissions API?
+
+Conceptually, permissions are simple: Granted / Denied.  
+However, in reality it's not that simple due to privacy enhancements on iOS and Android.  
+
+[Here's an example diagram from react-native-permissions's README](https://github.com/zoontek/react-native-permissions#ios-flow), which illustrates the complexity of the user-experience, which we don't want to duplicate in a camera library:
+```
+   ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+   ┃ check(PERMISSIONS.IOS.CAMERA) ┃
+   ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+                   │
+       Is the feature available
+           on this device ?
+                   │           ╔════╗
+                   ├───────────║ NO ║──────────────┐
+                   │           ╚════╝              │
+                ╔═════╗                            ▼
+                ║ YES ║                 ┌─────────────────────┐
+                ╚═════╝                 │ RESULTS.UNAVAILABLE │
+                   │                    └─────────────────────┘
+           Is the permission
+             requestable ?
+                   │           ╔════╗
+                   ├───────────║ NO ║──────────────┐
+                   │           ╚════╝              │
+                ╔═════╗                            ▼
+                ║ YES ║                  ┌───────────────────┐
+                ╚═════╝                  │ RESULTS.BLOCKED / │
+                   │                     │ RESULTS.LIMITED / │
+                   │                     │  RESULTS.GRANTED  │
+                   ▼                     └───────────────────┘
+          ┌────────────────┐
+          │ RESULTS.DENIED │
+          └────────────────┘
+                   │
+                   ▼
+  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+  ┃ request(PERMISSIONS.IOS.CAMERA) ┃
+  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+                   │
+         Does the user accept
+            the request ?
+                   │           ╔════╗
+                   ├───────────║ NO ║──────────────┐
+                   │           ╚════╝              │
+                ╔═════╗                            ▼
+                ║ YES ║                   ┌─────────────────┐
+                ╚═════╝                   │ RESULTS.BLOCKED │
+                   │                      └─────────────────┘
+                   ▼
+          ┌─────────────────┐
+          │ RESULTS.GRANTED │
+          └─────────────────┘
+```
+
+In earlier versions of react-native-camera-kit, permissions were provided with an API, but for the above reasons, these APIs will be removed.
+
 #### Android
 
 Add the following uses-permission to your `AndroidManifest.xml` (usually found at: `android/src/main/`)
@@ -100,7 +163,7 @@ Additionally, the Camera can be used for barcode scanning
   // Barcode props
   scanBarcode={true}
   onReadCode={(event) => Alert.alert('QR code found')} // optional
-  showFrame={true} // (default false) optional, show frame with transparent layer (qr code or barcode will be read on this area ONLY), start animation for scanner,that stoped when find any code. Frame always at center of the screen
+  showFrame={true} // (default false) optional, show frame with transparent layer (qr code or barcode will be read on this area ONLY), start animation for scanner, that stops when a code has been found. Frame always at center of the screen
   laserColor='red' // (default red) optional, color of laser in scanner frame
   frameColor='white' // (default white) optional, color of border of scanner frame
 />
@@ -121,6 +184,9 @@ Additionally, the Camera can be used for barcode scanning
 | `torchMode`                    | `'on'`/`'off'`                   | Toggle flash light when camera is active. Default: `off`                                                                                                                                                                                                                                                                                  |
 | `cameraType`                   | CameraType.Back/CameraType.Front | Choose what camera to use. Default: `CameraType.Back`                                                                                                                                                                                                                                                                                     |
 | `onOrientationChange`          | Function                         | Callback when physical device orientation changes. Returned event contains `orientation`. Ex: `onOrientationChange={(event) => console.log(event.nativeEvent.orientation)}`. Use `import { Orientation } from 'react-native-camera-kit'; if (event.nativeEvent.orientation === Orientation.PORTRAIT) { ... }` to understand the new value |
+| **Android only**                   |
+| `onError`          | Function                         | Android only. Callback when camera fails to initialize. Ex: `onError={(e) => console.log(e.nativeEvent.errorMessage)}`. |
+| `shutterPhotoSound`          | `boolean`              | Android only. Enable or disable the shutter sound when capturing a photo. Default: `true` |
 | **iOS only**                   |
 | `ratioOverlay`                 | `'int:int'`                      | Show a guiding overlay in the camera preview for the selected ratio. Does not crop image as of v9.0. Example: `'16:9'`                                                                                                                                                                                                                    |
 | `ratioOverlayColor`            | Color                            | Any color with alpha. Default: `'#ffffff77'`                                                                                                                                                                                                                                                                                              |
@@ -196,6 +262,13 @@ const isUserAuthorizedCamera = await Camera.requestDeviceCameraAuthorization();
 `AVAuthorizationStatusAuthorized` returns `true`
 
 otherwise, returns `false`
+
+## Using with Expo
+
+If you are using Expo Managed Workflow, you can use this library with a third-party plugin `expo-react-native-camera-kit`.
+
+[See more here](https://github.com/avantstay/expo-react-native-camera-kit)
+
 
 ## Contributing
 
